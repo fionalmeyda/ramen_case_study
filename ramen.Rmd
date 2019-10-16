@@ -1,0 +1,287 @@
+---
+title: "Untitled"
+author: "Fiona a Wijaya"
+date: "9/25/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r load data}
+load("/Users/fionalmeyda/Downloads/ramen.Rdata")
+library(stringr)
+library(stringi)
+library(lubridate)
+install.packages("dplyr")
+
+library(dplyr)
+unique(ramen$Brand)
+
+ramen$Top.ten
+a<-as.character(ramen$Top.Ten)
+class(a)
+unique(ramen$Top.Ten)
+results<- stri_sub(a[str_detect(a,"#")])
+results
+unique(stri_sub(results,1,4))
+
+```
+1. There are 355 different brands in the data set.
+2."2016", "2015", "2013", "2014" and "2012"
+3.ramen brands from the united states.
+ [1] Nissin                         
+ [2] Yamachan                       
+ [3] Jackpot Teriyaki               
+ [4] Lipton                         
+ [5] Pringles                       
+ [6] Myojo                          
+ [7] Daifuku                        
+ [8] Dream Kitchen                  
+ [9] Dr. McDougall's                
+[10] Shirakiku                      
+[11] Mama Pat's                     
+[12] Goku-Uma                       
+[13] Gefen                          
+[14] Farmer's Heart                 
+[15] Nongshim                       
+[16] Maruchan                       
+[17] Roland                         
+[18] Koyo                           
+[19] IbuRamen                       
+[20] Fortune                        
+[21] Thai Smile                     
+[22] Sapporo Ichiban                
+[23] Crystal Noodle                 
+[24] Authentically Asian            
+[25] One Dish Asia                  
+[26] Thai Pavilion                  
+[27] Osaka Ramen                    
+[28] Annie Chun's                   
+[29] Snapdragon                     
+[30] Miracle Noodle                 
+[31] Lotus Foods                    
+[32] Sakura Noodle                  
+[33] Thai Kitchen                   
+[34] Komforte Chockolates           
+[35] Tasty Bite                     
+[36] Star Anise Foods               
+[37] Tradition                      
+[38] Sun Noodle                     
+[39] S&S                            
+[40] Right Foods                    
+[41] Hosoonyi                       
+[42] Mexi-Ramen                     
+[43] Chikara                        
+[44] US Canning                     
+[45] Tayho                          
+[46] Fu Chang Chinese Noodle Company
+[47] Teriyaki Time                  
+[48] Smack                          
+[49] Westbrae   
+[50] Nongshim
+```{r 3usa}
+unique(ramen$Country)
+usa1<-unique(ramen$Brand[str_detect(ramen$Country,"USA")])
+usa2<-unique(ramen$Brand[str_detect(ramen$Country,"United")])
+usa1
+usa2
+```
+
+```{r 4number one slot}
+topone<-ramen$Brand[str_detect(ramen$Top.Ten,"#1")]
+topone
+
+#looks for the #1 and returns those
+ramenRep <- ramen[grep("#1", ramen$Top.Ten), c("Brand", "Top.Ten")]
+
+#takes out the ones that contain #10
+ramenRep <- ramenRep[!grepl("#10", ramenRep$Top.Ten), c("Brand", "Top.Ten")]
+
+#makes the brand field all lower 
+ramenRep$Brand <- tolower(ramenRep$Brand)
+
+#adds a count of each time it shows up 
+ramenRep %>% add_count(Brand)
+
+
+
+```
+
+```{r 5s}
+max(ramen$Stars,na.rm=T)
+star<-tapply(ramen$Stars, ramen$Brand, mean)
+sort(star,decreasing=TRUE)
+
+```
+
+4. Yes: MyKuali,Prima Taste and Mama.
+
+5.ChoripDong, Daddy,Daifuku,Foodmon,Higashi,Jackpot Teriyaki,Kiki Noodle, Kimura,Komforte Chockolates,MyOri,Nyor Nyar,ORee Garden,Patanjali, Peyang , Plats Du Chef,Prima, Prima Taste,Seven & I,Song Hak,Takamori,Tao Kae Noi,The Bridge ,The Ramen Rater Select 
+and  Torishi. (with  5.000000 )
+                      
+            
+```{r six}
+ramen2 <- ramen %>% add_count(Country,Style)
+
+colnames(ramen2)[8] <- ("Total")
+
+ramen3 <- ramen2[!duplicated(ramen2[c("Country","Style")]), c("Country", "Style", "Total")]
+
+ramen3 <- group_by(ramen3, Country) %>% mutate(Percent = round(100 *Total/sum(Total), digits = 0))
+
+ramen3 <- ramen3[order(ramen3$Country),]
+
+```
+6.Yes there is a correlation between country and how it is packeged
+
+```{r seven avg}
+ramenUS <- ramen[ramen$Country == "United States"| ramen$Country == "USA", c("Brand", "Variety", "Country", "Stars")]
+
+ramenUsResults <-data.frame("US", min(ramenUS$Stars), mean(ramenUS$Stars), max(ramenUS$Stars)) 
+
+colnames(ramenUsResults) <- c("Country", "Min", "Average", "Max")
+
+
+ramenSingapore <- ramen[ramen$Country == "Singapore", c("Brand", "Variety", "Country", "Stars")]
+
+ramenSingaporeResults <-data.frame("Singapore", min(ramenSingapore$Stars), mean(ramenSingapore$Stars), max(ramenSingapore$Stars)) 
+
+colnames(ramenSingaporeResults) <- c("Country", "Min", "Average", "Max")
+
+ramenUsSing <- ramen[grep("#", ramen$Top.Ten), c("Country", "Top.Ten")]
+
+ramenUsSing <- ramenUsSing[ramenUsSing$Country == "USA" | ramenUsSing$Country == "United States" | ramenUsSing$Country == "Singapore", c("Country", "Top.Ten")]
+
+```
+7A.Based on the results I would expect that Singapore would show in the top ten more often.
+
+7B.This is confirmed by the results.
+```{r eight }
+new_table<- table(ramen$Country)
+new_dataframe<-as.data.frame(new_table)
+names(new_dataframe)[1]='ramencountry'
+max(new_dataframe$Freq)
+new_dataframe$ramencountry[new_dataframe$Freq==352]
+
+max(ramen$Stars,na.rm=T)
+country_star<-tapply(ramen$Stars, ramen$Country, mean)
+sort(country_star,decreasing=TRUE)
+
+```
+8. Japan makes the most ramen with 352 ramens.Brazil makes the best ramen, i concluded this from their star rating average, since it is higher than the rest.No the country that makes the most ramen does not make the best ramen.
+```{r nine}
+spicy <- ramen[str_detect(tolower(ramen$Variety),"spicy"), c("Variety", "Stars")]
+str(spicy)
+summary(spicy)
+
+
+mild <- ramen[!str_detect(tolower(ramen$Variety),"spicy"), c("Variety", "Stars")]
+str(mild)
+
+summary(mild)
+```
+9.There are 270 brands that are described as spicy, those that are spicy have a higher average rating
+
+```{r ten saltiness}
+summary(ramen$perc_salt)
+
+firstq <- ramen[ramen$perc_salt <= 18.372, c("Variety", "Stars")]
+
+secondq <- ramen[ramen$perc_salt > 18.372 & ramen$perc_salt <= 19.340, c("Variety", "Stars")]
+
+thirdq <- ramen[ramen$perc_salt > 19.340 & ramen$perc_salt <= 20.198, c("Variety", "Stars")]
+
+fourthq <- ramen[ramen$perc_salt > 20.198 & ramen$perc_salt <= 22.870, c("Variety", "Stars")]
+
+
+mean(firstq[["Stars"]], na.rm = TRUE)
+mean(secondq[["Stars"]], na.rm = TRUE)
+mean(thirdq[["Stars"]], na.rm = TRUE)
+mean(fourthq[["Stars"]], na.rm = TRUE)
+
+```
+10. Overall the rating goes up with the higher amounts of salt but there is some decrease in ratings do start to decrease slightly when you get into the higher salt contents quartile 3 and 4
+
+```{r eleven }
+
+#Country
+ramenSaltCountry <- ramen %>% add_count(Country)
+
+colnames(ramenSaltCountry)[8] <- ("Total")
+
+ramenSaltCountry2 <- group_by(ramenSaltCountry, Country) %>% mutate(AvgSalt = round(sum(perc_salt) / Total , digits = 6))
+
+ramenSaltCountry3 <- ramenSaltCountry2[!duplicated(ramenSaltCountry2[c("Country")]), c("Country", "Total", "AvgSalt")]
+
+#Style
+
+ramenSaltStyle <- ramen %>% add_count(Style)
+
+colnames(ramenSaltStyle)[8] <- ("Total")
+
+ramenSaltStyle2 <- group_by(ramenSaltStyle, Style) %>% mutate(AvgSalt = round(sum(perc_salt) / Total , digits = 6))
+
+ramenSaltStyle3 <- ramenSaltStyle2[!duplicated(ramenSaltStyle2[c("Style")]), c("Style", "Total", "AvgSalt")]
+
+
+#Brand
+
+ramenSaltBrand <- ramen %>% add_count(Brand)
+
+colnames(ramenSaltBrand)[8] <- ("Total")
+
+ramenSaltBrand2 <- group_by(ramenSaltBrand, Brand) %>% mutate(AvgSalt = round(sum(perc_salt) / Total , digits = 6))
+
+ramenSaltBrand3 <- ramenSaltBrand2[!duplicated(ramenSaltBrand2[c("Brand")]), c("Brand", "Total", "AvgSalt")]
+
+#Variety
+
+ramenSaltSpicy <- ramen[str_detect(tolower(ramen$Variety),"spicy"), c("Variety", "Stars", "perc_salt")]
+
+
+ramenSaltMild <- ramen[str_detect(tolower(ramen$Variety),"mild"), c("Variety", "Stars", "perc_salt")]
+
+ramenSaltNeither <- ramen[!str_detect(tolower(ramen$Variety),"spicy") & !str_detect(tolower(ramen$Variety),"mild"), c("Variety", "Stars", "perc_salt")]
+
+(round(sum(ramenSaltSpicy$perc_salt) / length(ramenSaltSpicy$Variety) , digits = 6))
+(round(sum(ramenSaltMild$perc_salt) / length(ramenSaltMild$Variety) , digits = 6))
+(round(sum(ramenSaltNeither$perc_salt) / length(ramenSaltNeither$Variety) , digits = 6))
+
+```
+
+11.Country: The average salt per product ranges for the high in the US at 21.24% and the low at 15.83 in Nigeria but it does appear there can be a significant difference based on the country
+
+Styles:Looking at the average salt content between the different sytles there is only a small variance between each style, there does not appear to be a correlation
+
+Brand: There is a significant difference in the amount of salt contained in the different brands, ranging from 22.61 to 
+
+Variety: I choose three different types of varities brands that are listed as Spicy, Mild and brands that have neither in their title
+
+
+12.OPEN ENDED:
+```{r variety}
+not_topten <- ramen$Stars[!str_detect(ramen$Top.Ten,"#")]
+summary(not_topten)
+
+
+first_qu <- ramen[not_topten <= 3.250, c("Variety", "Country")]
+
+second_qu <- ramen[not_topten > 3.250  & not_topten <= 3.750, c("Variety", "Country")]
+
+third_qu <- ramen[not_topten> 3.750 & not_topten <=  4.250, c("Variety", "Country")]
+
+fourth_qu <- ramen[not_topten >  4.250 &not_topten <= 5.000, c("Variety", "Country")]
+
+topten_only<- ramen[ramen$Top.Ten,c("Variety","Country")]
+
+first_qu
+second_qu
+third_qu
+fourth_qu
+topten_only
+
+```
+
+13.OPEN ENDED:
+

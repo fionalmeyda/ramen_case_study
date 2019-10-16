@@ -1,0 +1,358 @@
+---
+title: "Ramen"
+author: "Devin Adams, Fiona Almeyda Wijaya, Natalia Jones"
+date: "September 27, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Question 1
+```{r ramen}
+
+#loading libraries
+library(stringi)
+
+library(stringr)
+
+library(dplyr)
+
+library(ggplot2)
+
+library(dplyr)
+
+
+library(formattable)
+
+load("/Users/fionalmeyda/Downloads/ramen.Rdata")
+
+uniqueRamen <- unique(tolower(ramen$Brand))
+
+summary(uniqueRamen)
+
+
+```
+
+
+#Question 2
+```{r years}
+
+
+topTen <- as.character(ramen$Top.Ten)
+
+results <- stri_sub(topTen[str_detect(topTen,"#")])
+
+
+results <- unique(stri_sub(results,1,4))
+
+results
+
+```
+
+#Question 3
+```{r US}
+
+
+ramenCountries <- subset(ramen, ramen$Country == "USA" | ramen$Country == "United States", select = c("Brand", "Country"))
+
+unique(tolower(ramenCountries$Brand))
+```
+
+#Question 4
+```{r Repeat Winners}
+
+ramenRep <- ramen[grep("#1", ramen$Top.Ten), c("Brand", "Top.Ten")]
+
+ramenRep <- ramenRep[!grepl("#10", ramenRep$Top.Ten), c("Brand", "Top.Ten")]
+
+ramenRep$Brand <- tolower(ramenRep$Brand)
+
+ramenRep <- ramenRep %>% add_count(Brand)
+
+ramenRep
+
+```
+
+#Question 5
+```{r Highest Average}
+
+sumRamen <- aggregate(ramen[,5], list(tolower(ramen$Brand)), mean)
+
+names(sumRamen) <- c("Brand", "Stars")
+
+sumRamen <- sumRamen[sumRamen$Stars == max(sumRamen$Stars, na.rm = T) & !is.na(sumRamen$Stars), c("Brand", "Stars")]
+
+sumRamen
+
+```
+
+#Question 6
+```{r Packaging}
+
+
+ramenPack <- ramen %>% add_count(Country,Style)
+
+colnames(ramenPack)[8] <- ("Total")
+
+ramenPack <- ramenPack[!duplicated(ramenPack[c("Country","Style")]), c("Country", "Style", "Total")]
+
+ramenPack <- group_by(ramenPack, Country) %>% mutate(Percent = round(100 *Total/sum(Total), digits = 0))
+
+ramenPack <- ramenPack[order(ramenPack$Country),]
+
+ramenPack
+
+```
+
+#Question 7
+```{r Us and Singapore}
+
+ramenUS <- ramen[ramen$Country == "United States"| ramen$Country == "USA", c("Brand", "Variety", "Country", "Stars")]
+
+ramenUsResults <-data.frame("US", min(ramenUS$Stars), mean(ramenUS$Stars), max(ramenUS$Stars)) 
+
+colnames(ramenUsResults) <- c("Country", "Min", "Average", "Max")
+
+ramenUsResults
+
+
+ramenSingapore <- ramen[ramen$Country == "Singapore", c("Brand", "Variety", "Country", "Stars")]
+
+ramenSingaporeResults <-data.frame("Singapore", min(ramenSingapore$Stars), mean(ramenSingapore$Stars), max(ramenSingapore$Stars)) 
+
+colnames(ramenSingaporeResults) <- c("Country", "Min", "Average", "Max")
+
+ramenSingaporeResults
+
+
+ramenUsSing <- ramen[grep("#", ramen$Top.Ten), c("Country", "Top.Ten")]
+
+ramenUsSing <- ramenUsSing[ramenUsSing$Country == "USA" | ramenUsSing$Country == "United States" | ramenUsSing$Country == "Singapore", c("Country", "Top.Ten")]
+
+ramenUsSing
+
+```
+
+#Question 8
+```{r Ramen By Country}
+
+
+new_table<- table(ramen$Country)
+
+new_dataframe<-as.data.frame(new_table)
+
+names(new_dataframe)[1]='ramencountry'
+
+max(new_dataframe$Freq)
+
+new_dataframe$ramencountry[new_dataframe$Freq==352]
+
+max(ramen$Stars,na.rm=T)
+
+country_star<-as.data.frame(tapply(ramen$Stars, ramen$Country, mean))
+
+names(country_star)[1]= "AverageRating"
+
+country_star
+```
+
+#Question 9
+```{r Spicy}
+
+
+spicy <- ramen[str_detect(tolower(ramen$Variety),"spicy"), c("Variety", "Stars")]
+str(spicy)
+
+
+mild <- ramen[!str_detect(tolower(ramen$Variety),"spicy"), c("Variety", "Stars")]
+str(mild)
+
+```
+
+#Question 10
+```{r Effect of Saltiness}
+
+
+summary(ramen$perc_salt)
+
+firstq <- ramen[ramen$perc_salt <= 18.372, c("Variety", "Stars")]
+
+secondq <- ramen[ramen$perc_salt > 18.372 & ramen$perc_salt <= 19.340, c("Variety", "Stars")]
+
+thirdq <- ramen[ramen$perc_salt > 19.340 & ramen$perc_salt <= 20.198, c("Variety", "Stars")]
+
+fourthq <- ramen[ramen$perc_salt > 20.198 & ramen$perc_salt <= 22.870, c("Variety", "Stars")]
+
+mean(firstq[["Stars"]], na.rm = TRUE)
+mean(secondq[["Stars"]], na.rm = TRUE)
+mean(thirdq[["Stars"]], na.rm = TRUE)
+mean(fourthq[["Stars"]], na.rm = TRUE)
+
+```
+
+#Question 11
+```{r Saltiness by various variables}
+##Question #11
+
+#Country
+ramenSaltCountry <- ramen %>% add_count(Country)
+
+colnames(ramenSaltCountry)[8] <- ("Total")
+
+ramenSaltCountry2 <- group_by(ramenSaltCountry, Country) %>% mutate(AvgSalt = round(sum(perc_salt) / Total , digits = 6))
+
+ramenSaltCountry3 <- ramenSaltCountry2[!duplicated(ramenSaltCountry2[c("Country")]), c("Country", "Total", "AvgSalt")]
+
+ramenSaltCountry3
+
+#Style
+
+ramenSaltStyle <- ramen %>% add_count(Style)
+
+colnames(ramenSaltStyle)[8] <- ("Total")
+
+ramenSaltStyle2 <- group_by(ramenSaltStyle, Style) %>% mutate(AvgSalt = round(sum(perc_salt) / Total , digits = 6))
+
+ramenSaltStyle3 <- ramenSaltStyle2[!duplicated(ramenSaltStyle2[c("Style")]), c("Style", "Total", "AvgSalt")]
+
+ramenSaltStyle3
+
+#Brand
+
+ramenSaltBrand <- ramen %>% add_count(Brand)
+
+colnames(ramenSaltBrand)[8] <- ("Total")
+
+ramenSaltBrand2 <- group_by(ramenSaltBrand, Brand) %>% mutate(AvgSalt = round(sum(perc_salt) / Total , digits = 6))
+
+ramenSaltBrand3 <- ramenSaltBrand2[!duplicated(ramenSaltBrand2[c("Brand")]), c("Brand", "Total", "AvgSalt")]
+
+ramenSaltBrand3
+
+#Variety
+
+ramenSaltSpicy <- ramen[str_detect(tolower(ramen$Variety),"spicy"), c("Variety", "Stars", "perc_salt")]
+
+
+ramenSaltMild <- ramen[str_detect(tolower(ramen$Variety),"mild"), c("Variety", "Stars", "perc_salt")]
+
+ramenSaltNeither <- ramen[!str_detect(tolower(ramen$Variety),"spicy") & !str_detect(tolower(ramen$Variety),"mild"), c("Variety", "Stars", "perc_salt")]
+
+(round(sum(ramenSaltSpicy$perc_salt) / length(ramenSaltSpicy$Variety) , digits = 6))
+(round(sum(ramenSaltMild$perc_salt) / length(ramenSaltMild$Variety) , digits = 6))
+(round(sum(ramenSaltNeither$perc_salt) / length(ramenSaltNeither$Variety) , digits = 6))
+
+```
+
+#Question 12
+```{r variety}
+
+
+not_topten <- subset(ramen,!str_detect(ramen$Top.Ten,"#"))
+
+summary(not_topten$Stars)
+
+first_quStar <- subset(not_topten, not_topten$Stars <= 3.250 | is.na(not_topten$Stars), c("Variety", "Country"))
+
+second_quStar <- subset(not_topten, not_topten$Stars > 3.250 & not_topten$Stars <= 3.750, c("Variety", "Country"))
+
+third_quStar <- subset(not_topten, not_topten$Stars > 3.750 & not_topten$Stars <= 4.250, c("Variety", "Country"))
+
+fourth_quStar <- subset(not_topten, not_topten$Stars > 4.250 & not_topten$Stars <= 5.000, c("Variety", "Country"))
+
+topten_onlyStar<- subset(ramen, str_detect(ramen$Top.Ten,"#"),c("Variety","Country"))
+
+```
+
+
+#Question 13
+```{r best ramen}
+
+
+#Country 
+country_star
+
+#Style
+
+ramenRatingStyle <- ramen %>% add_count(Style)
+
+colnames(ramenRatingStyle)[8] <- ("Total")
+
+ramenRatingStyle2 <- group_by(ramenRatingStyle, Style) %>% mutate(AvgStar = round(sum(Stars, na.rm = TRUE) / Total , digits = 6))
+
+ramenRatingStyle3 <- ramenRatingStyle2[!duplicated(ramenRatingStyle2[c("Style")]), c("Style", "Total", "AvgStar")]
+
+ramenRatingStyle3
+
+# Salt Content
+
+mean(firstq[["Stars"]], na.rm = TRUE)
+mean(secondq[["Stars"]], na.rm = TRUE)
+mean(thirdq[["Stars"]], na.rm = TRUE)
+mean(fourthq[["Stars"]], na.rm = TRUE)
+
+#Variety
+
+ramenStarSpicy <- ramen[str_detect(tolower(ramen$Variety),"spicy"), c("Variety", "Stars")]
+
+ramenStarMild <- ramen[str_detect(tolower(ramen$Variety),"mild"), c("Variety", "Stars")]
+
+ramenStarNeither <- ramen[!str_detect(tolower(ramen$Variety),"spicy") & !str_detect(tolower(ramen$Variety),"mild"), c("Variety", "Stars")]
+
+(round(sum(ramenStarSpicy$Stars) / length(ramenStarSpicy$Variety) , digits = 6))
+(round(sum(ramenStarMild$Stars) / length(ramenStarMild$Variety) , digits = 6))
+(round(sum(ramenStarNeither$Stars, na.rm = TRUE) / length(ramenStarNeither$Variety) , digits = 6))
+
+
+```
+
+
+
+1. There are 353 values
+
+2. 2016, 2015, 2013, 2014 & 2012
+
+3. 49 brands are from the United States 
+
+4. prima taste & mykuali both got the #1 spot more than once 
+
+5. There are 24 brands that tie with an average score of 5
+
+6. Yes there is a correlation between country and how ut is packeged
+
+7.
+  A) Based on the results I would expect that Singapore would show in the top ten more often
+
+  B) This is confirmed by the results 
+  
+8. Japan makes the most ramen with 352 ramens and Brazil makes the best ramen. The country that makes the most and the country that makes the best are different
+
+9. There are 270 brands that are described as spicy, those that are spicy have a higher average rating 
+
+10. Overall the rating goes up with the higher amounts of salt but there is some decrease in ratings do start to decrease slightly when you get into the higher salt contents quartile 3 and 4
+
+11.
+
+  Country: The average salt per product ranges for the high in the US at 21.24% and the low at 15.83 in Nigeria but it does appear there can be a significant difference based on the country
+  
+  Styles:Looking at the average salt content between the different sytles there is only a small variance between each style, there does not appear to be a correlation
+  
+  Brand: There is a significant difference in the amount of salt contained in the different brands, ranging from 22.61 to 4.42
+  
+  Variety: I choose three different types of varities brands that are listed as Spicy, Mild and brands that have neither in their title
+  
+12. For question 12 we broke down the varities into 5 different sections, ramen with star ratings in the 1st quartile, 2nd quartile, 3rd quartile, 4th quartile and lastly those that ranked in the top ten. As an additional note we included those that had N/A ratings in the first quartile to make sure they were represented. 
+
+
+13. Looking at the different variables provided, Roamin' Ramen would produce the highest average rating by:
+
+a. Producing the ramen in Brazil, this country has the highest average rating
+
+b. Making the Ramen spicy, Ramen with Spicy in the title has a higher average rating than those with mild or with neither in the title
+
+c. The style should be either a bar, box or pack. Bar and box having the highest rating but having a small enough sample size this may be an outlier, pack having the highest rating with large sample size
+
+d.The salt content should be in the second quartile, greater than 18.372% and less than or equal to 19.340% varities with these salt contents have the highest average rating 
+  
